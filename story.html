@@ -106,6 +106,14 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link active" href="./story.html" aria-current="page"> 
 <span class="menu-text">Story</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./leaders.html"> 
+<span class="menu-text">Home Run Leaders</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./stadiums.html"> 
+<span class="menu-text">MLB Stadiums</span></a>
+  </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
@@ -140,15 +148,11 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<div class="cell">
-<div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="story_files/figure-html/coors-comparison-plot-1.png" class="img-fluid figure-img" width="912"></p>
+<p><img src="images/coors-comparison-plot.png" class="img-fluid figure-img" width="912"></p>
 <figcaption>2024 MLB Statcast fly balls and line drives (n = 62,145) grouped by stadium elevation.</figcaption>
 </figure>
-</div>
-</div>
 </div>
 <p>Across all 62,145 tracked fly balls and line drives in the 2024 MLB regular season, baseballs hit at Denver’s Coors Field (5,180 feet above sea level) traveled an average of <strong>290.1 feet</strong>—about 6.5 to 7.3 feet farther than balls hit in near-sea-level stadiums (283.6 feet) and mid-elevation ballparks (282.8 feet), with higher-elevation parks between 700 and 1,086 feet also sitting above sea level at 286.3 feet. As the second and third panels make clear, hitters at Coors Field did not generate this extra distance by swinging harder or lifting the ball higher: average exit velocity (92.5 mph) and average launch angle (27.3°) at Coors Field were virtually indistinguishable from lower-elevation stadiums across MLB.</p>
 <p>Because aerodynamic drag increases with air speed, thin high-altitude air makes the biggest difference on hard-hit deep fly balls. Focusing specifically on solidly struck drives hit between 95 and 105 mph at launch angles between 20° and 35°, exit velocity (99.8 vs.&nbsp;99.9 mph) and launch angle (26.9° vs.&nbsp;26.9°) are identical, yet balls at Coors Field traveled an average of <strong>384.1 feet</strong> compared to <strong>367.2 feet</strong> across the other 29 MLB parks. That <strong>16.9-foot boost</strong> in carry often turns routine warning-track flyouts into home runs or extra-base hits, explaining why Colorado built deeper outfield walls and still leads baseball in high-altitude offensive environment.</p>
@@ -230,7 +234,7 @@ ul.task-list li input[type="checkbox"] {
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/cadenhons13\.github\.io\/baseball-elevation\/");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
