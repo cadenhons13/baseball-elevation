@@ -1,0 +1,270 @@
+---
+title: "MLB Stadiums: Elevation & Home Runs"
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(tidyverse)
+library(leaflet)
+library(plotly)
+library(DT)
+library(crosstalk)
+
+# Official MLB ballpark elevations, coordinates, and Statcast-tracked regular-season
+# home run totals (2015-2026 cumulative Statcast Era & 2026 single season)
+mlb_stadiums <- tribble(
+  ~stadium, ~team, ~division, ~city, ~lat, ~lon, ~elevation_ft, ~hr_statcast_total, ~games_statcast, ~hr_2026, ~avg_hr_dist_ft, ~roof_type, ~opened,
+  "Coors Field", "Colorado Rockies", "NL West", "Denver, CO", 39.7559, -104.9942, 5180, 2436, 919, 211, 419, "Open-Air", 1995,
+  "Chase Field", "Arizona Diamondbacks", "NL West", "Phoenix, AZ", 33.4455, -112.0667, 1086, 2053, 919, 170, 406, "Retractable", 1998,
+  "Truist Park", "Atlanta Braves", "NL East", "Atlanta, GA", 33.8907, -84.4677, 1050, 1842, 759, 199, 405, "Open-Air", 2017,
+  "Kauffman Stadium", "Kansas City Royals", "AL Central", "Kansas City, MO", 39.0517, -94.4803, 910, 1838, 920, 196, 410, "Open-Air", 1973,
+  "Target Field", "Minnesota Twins", "AL Central", "Minneapolis, MN", 44.9817, -93.2778, 840, 2234, 921, 161, 402, "Open-Air", 2010,
+  "PNC Park", "Pittsburgh Pirates", "NL Central", "Pittsburgh, PA", 40.4469, -80.0057, 743, 1737, 920, 170, 401, "Open-Air", 2001,
+  "Progressive Field", "Cleveland Guardians", "AL Central", "Cleveland, OH", 41.4962, -81.6852, 653, 2025, 919, 161, 396, "Open-Air", 1994,
+  "Comerica Park", "Detroit Tigers", "AL Central", "Detroit, MI", 42.3390, -83.0485, 600, 2002, 918, 170, 393, "Open-Air", 2000,
+  "Globe Life Field", "Texas Rangers", "AL West", "Arlington, TX", 32.7473, -97.0842, 600, 1229, 516, 181, 401, "Retractable", 2020,
+  "Wrigley Field", "Chicago Cubs", "NL Central", "Chicago, IL", 41.9484, -87.6553, 596, 2184, 924, 238, 399, "Open-Air", 1914,
+  "Rate Field", "Chicago White Sox", "AL Central", "Chicago, IL", 41.8299, -87.6338, 594, 2193, 924, 194, 395, "Open-Air", 1991,
+  "American Family Field", "Milwaukee Brewers", "NL Central", "Milwaukee, WI", 43.0280, -87.9712, 593, 2253, 922, 169, 401, "Retractable", 2001,
+  "Great American Ball Park", "Cincinnati Reds", "NL Central", "Cincinnati, OH", 39.0979, -84.5082, 482, 2539, 920, 207, 393, "Open-Air", 2003,
+  "Busch Stadium", "St. Louis Cardinals", "NL Central", "St. Louis, MO", 38.6226, -90.1928, 450, 1803, 917, 132, 402, "Open-Air", 2006,
+  "Dodger Stadium", "Los Angeles Dodgers", "NL West", "Los Angeles, CA", 34.0739, -118.2400, 267, 2429, 921, 190, 398, "Open-Air", 1962,
+  "Rogers Centre", "Toronto Blue Jays", "AL East", "Toronto, ON", 43.6414, -79.3894, 250, 2156, 846, 163, 396, "Retractable", 1989,
+  "Angel Stadium", "Los Angeles Angels", "AL West", "Anaheim, CA", 33.8003, -117.8827, 160, 2302, 921, 131, 403, "Open-Air", 1966,
+  "Yankee Stadium", "New York Yankees", "AL East", "Bronx, NY", 40.8296, -73.9262, 55, 2619, 921, 216, 391, "Open-Air", 2009,
+  "Daikin Park", "Houston Astros", "AL West", "Houston, TX", 29.7573, -95.3555, 50, 2299, 916, 215, 386, "Retractable", 2000,
+  "Tropicana Field", "Tampa Bay Rays", "AL East", "St. Petersburg, FL", 27.7682, -82.6534, 42, 1868, 843, 197, 399, "Fixed Dome", 1990,
+  "Citizens Bank Park", "Philadelphia Phillies", "NL East", "Philadelphia, PA", 39.9061, -75.1665, 40, 2368, 922, 201, 394, "Open-Air", 2004,
+  "T-Mobile Park", "Seattle Mariners", "AL West", "Seattle, WA", 47.5914, -122.3325, 30, 2230, 915, 194, 394, "Retractable", 1999,
+  "Nationals Park", "Washington Nationals", "NL East", "Washington, DC", 38.8730, -77.0074, 25, 2259, 928, 237, 402, "Open-Air", 2008,
+  "Sutter Health Park", "Athletics", "AL West", "West Sacramento, CA", 38.5804, -121.5138, 25, 468, 156, 238, 401, "Open-Air", 2000,
+  "Oriole Park at Camden Yards", "Baltimore Orioles", "AL East", "Baltimore, MD", 39.2838, -76.6217, 20, 2522, 921, 188, 399, "Open-Air", 1992,
+  "Fenway Park", "Boston Red Sox", "AL East", "Boston, MA", 42.3467, -71.0972, 20, 2064, 923, 147, 397, "Open-Air", 1912,
+  "Oracle Park", "San Francisco Giants", "NL West", "San Francisco, CA", 37.7786, -122.3893, 13, 1614, 924, 147, 396, "Open-Air", 2000,
+  "Petco Park", "San Diego Padres", "NL West", "San Diego, CA", 32.7076, -117.1570, 13, 2044, 918, 172, 395, "Open-Air", 2004,
+  "Citi Field", "New York Mets", "NL East", "Queens, NY", 40.7571, -73.8458, 12, 2130, 926, 184, 397, "Open-Air", 2009,
+  "loanDepot park", "Miami Marlins", "NL East", "Miami, FL", 25.7781, -80.2196, 7, 1721, 913, 147, 401, "Retractable", 2012
+) |>
+  mutate(
+    hr_per_game = round(hr_statcast_total / games_statcast, 2),
+    elevation_tier = factor(
+      case_when(
+        elevation_ft >= 5000 ~ "Mile High (5,180 ft)",
+        elevation_ft >= 700 ~ "Highland (700–1,100 ft)",
+        elevation_ft >= 100 ~ "Mid-Elevation (100–699 ft)",
+        TRUE ~ "Near Sea Level (<100 ft)"
+      ),
+      levels = c(
+        "Near Sea Level (<100 ft)",
+        "Mid-Elevation (100–699 ft)",
+        "Highland (700–1,100 ft)",
+        "Mile High (5,180 ft)"
+      )
+    )
+  )
+
+# Pre-order stadium names by Statcast total HRs for clean horizontal bar ordering
+stadium_levels <- mlb_stadiums |>
+  arrange(hr_statcast_total) |>
+  pull(stadium)
+
+mlb_stadiums <- mlb_stadiums |>
+  mutate(stadium_ranked = factor(stadium, levels = stadium_levels))
+
+shared_parks <- SharedData$new(mlb_stadiums, key = ~stadium, group = "mlb_parks")
+
+tier_colors <- c(
+  "Near Sea Level (<100 ft)" = "#2c7fb8",
+  "Mid-Elevation (100–699 ft)" = "#41ab5d",
+  "Highland (700–1,100 ft)" = "#fe9929",
+  "Mile High (5,180 ft)" = "#d95f02"
+)
+
+tier_pal <- colorFactor(
+  palette = unname(tier_colors),
+  levels = names(tier_colors)
+)
+```
+
+## Stadium Elevation & Home Runs Across All 30 MLB Ballparks
+
+How many home runs are actually hit at each Major League Baseball stadium—and how do **ballpark elevation** and **outfield dimensions** interact to shape those totals? Using official MLB Statcast ball-tracking data across the **Statcast Era (2015–2026)** alongside single-season **2026 home run counts**, we can compare all 30 current MLB ballparks by altitude, total home runs hit, home runs per game, and average home run distance:
+
+- **Most Total Home Runs (2015–2026):** **Yankee Stadium** (2,619 HRs; 55 ft elevation), **Great American Ball Park** (2,539 HRs; 482 ft), **Oriole Park at Camden Yards** (2,522 HRs; 20 ft), and **Coors Field** (2,436 HRs; **5,180 ft**) top all active MLB venues.
+- **Why Elevation Still Rules Ball Flight:** Even though Colorado pushed Coors Field's outfield fences far back to contain scoring, thin mile-high air propelled Coors Field to **2,436 home runs (#4 in MLB)** and an MLB-best **419-foot average home run distance**—nearly 30 feet longer than short-porch parks like Yankee Stadium (391 ft) and Daikin Park (386 ft). Meanwhile, sea-level **Oracle Park** (13 ft) sits lowest among long-tenured parks with just **1,614 home runs** (1.75 HR/game).
+- *Note on newer MLB venues:* **Truist Park** (opened 2017; 1,842 HRs in 759 games), **Globe Life Field** (opened 2020; 1,229 HRs in 516 games), and **Sutter Health Park** (MLB home of the Athletics in 2025–2026; 468 HRs in 156 games, or an MLB-high 3.00 HR/game) have fewer cumulative Statcast-era games, so both **total HRs** and **HRs per game** (plus **2026 single-season HRs**) are shown below.
+
+Use the filters below to explore stadiums by **division**, **roof design**, or **ballpark name**—your selections dynamically filter the map, both charts, and the directory table.
+
+```{r}
+bscols(
+  widths = c(4, 4, 4),
+  filter_select(
+    id = "division_filter",
+    label = "Filter by MLB Division:",
+    sharedData = shared_parks,
+    group = ~division
+  ),
+  filter_checkbox(
+    id = "roof_filter",
+    label = "Roof Design:",
+    sharedData = shared_parks,
+    group = ~roof_type,
+    inline = TRUE
+  ),
+  filter_select(
+    id = "park_selector",
+    label = "Select / Compare Stadium(s):",
+    sharedData = shared_parks,
+    group = ~stadium
+  )
+)
+```
+
+### Interactive MLB Ballpark Map: Elevation & Home Runs Hit
+
+Circle color indicates **elevation tier**, while circle size scales with **2026 home runs hit**. Hover or click any stadium marker to inspect its exact elevation and home run totals.
+
+```{r}
+leaflet(shared_parks, height = 470) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addCircleMarkers(
+    lng = ~lon,
+    lat = ~lat,
+    radius = ~pmax(6, hr_2026 / 18),
+    color = "#ffffff",
+    fillColor = ~tier_pal(elevation_tier),
+    fillOpacity = 0.88,
+    stroke = TRUE,
+    weight = 1.5,
+    popup = ~paste0(
+      "<b>", stadium, "</b><br>",
+      "Team: ", team, " (", division, ")<br>",
+      "City: ", city, "<br>",
+      "<b>Elevation: ", scales::comma(elevation_ft), " ft</b><br>",
+      "<b>Total HRs (2015–2026): ", scales::comma(hr_statcast_total), "</b> (", games_statcast, " games)<br>",
+      "<b>2026 Season HRs: ", hr_2026, "</b><br>",
+      "HRs per Game: ", hr_per_game, "<br>",
+      "Avg HR Distance: ", avg_hr_dist_ft, " ft<br>",
+      "Roof: ", roof_type, " | Opened: ", opened
+    ),
+    label = ~paste0(
+      stadium, " — ", scales::comma(elevation_ft), " ft | ",
+      scales::comma(hr_statcast_total), " HRs (2015–26)"
+    )
+  ) |>
+  addLegend(
+    position = "bottomright",
+    pal = tier_pal,
+    values = ~elevation_tier,
+    title = "Stadium Elevation",
+    opacity = 0.92
+  )
+```
+
+### Stadium Elevation vs. Home Run Rate & Total Home Runs
+
+Each point plots a ballpark's **elevation (feet)** against **home runs hit per game (2015–2026)**, with bubble size representing **average home run distance** and hover details showing exact cumulative and 2026 home run counts.
+
+```{r}
+plot_ly(
+  data = shared_parks,
+  x = ~elevation_ft,
+  y = ~hr_per_game,
+  color = ~elevation_tier,
+  colors = tier_colors,
+  size = ~avg_hr_dist_ft,
+  sizes = c(11, 28),
+  type = "scatter",
+  mode = "markers",
+  marker = list(opacity = 0.88, line = list(color = "#ffffff", width = 1.5)),
+  text = ~paste0(
+    "<b>", stadium, "</b> (", team, ")<br>",
+    "Elevation: <b>", scales::comma(elevation_ft), " ft</b><br>",
+    "Total HRs (2015–2026): <b>", scales::comma(hr_statcast_total), "</b><br>",
+    "2026 Season HRs: <b>", hr_2026, "</b><br>",
+    "HRs per Game: <b>", hr_per_game, "</b> (", games_statcast, " games)<br>",
+    "Avg HR Distance: ", avg_hr_dist_ft, " ft<br>",
+    "Roof: ", roof_type
+  ),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = "MLB Ballpark Elevation vs. Home Runs Hit per Game (2015–2026)",
+    xaxis = list(title = "Stadium Elevation Above Sea Level (feet)", separatethousands = TRUE),
+    yaxis = list(title = "Home Runs Hit per Game (Both Teams Combined)"),
+    legend = list(orientation = "h", x = 0, y = -0.2),
+    height = 450,
+    margin = list(l = 65, r = 25, t = 50, b = 85)
+  ) |>
+  config(displayModeBar = FALSE)
+```
+
+### Total Home Runs Hit at Each Current MLB Stadium (2015–2026)
+
+```{r}
+plot_ly(
+  data = shared_parks,
+  x = ~hr_statcast_total,
+  y = ~stadium_ranked,
+  color = ~elevation_tier,
+  colors = tier_colors,
+  type = "bar",
+  orientation = "h",
+  text = ~paste0(
+    "<b>", stadium, "</b> (", city, ")<br>",
+    "Elevation: <b>", scales::comma(elevation_ft), " ft</b><br>",
+    "Total HRs (2015–2026): <b>", scales::comma(hr_statcast_total), "</b><br>",
+    "2026 Season HRs: <b>", hr_2026, "</b><br>",
+    "HRs per Game: ", hr_per_game, " across ", games_statcast, " games<br>",
+    "Avg HR Distance: ", avg_hr_dist_ft, " ft"
+  ),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = "Cumulative Regular-Season Home Runs by MLB Ballpark (Statcast Era, 2015–2026)",
+    xaxis = list(title = "Total Home Runs Hit at Stadium (2015–2026)", separatethousands = TRUE),
+    yaxis = list(title = ""),
+    legend = list(orientation = "h", x = 0, y = -0.12),
+    height = 700,
+    margin = list(l = 195, r = 25, t = 50, b = 75)
+  ) |>
+  config(displayModeBar = FALSE)
+```
+
+### Complete MLB Stadium Elevation & Home Run Table
+
+```{r}
+datatable(
+  shared_parks,
+  rownames = FALSE,
+  colnames = c(
+    "Stadium",
+    "Team",
+    "Division",
+    "City",
+    "Lat",
+    "Lon",
+    "Elevation (ft)",
+    "Total HRs (2015–26)",
+    "MLB Games",
+    "2026 HRs",
+    "Avg HR Dist (ft)",
+    "Roof",
+    "Opened",
+    "HR / Game",
+    "Elevation Tier",
+    "Stadium Order"
+  ),
+  options = list(
+    pageLength = 15,
+    lengthChange = TRUE,
+    order = list(list(6, "desc")),
+    columnDefs = list(list(visible = FALSE, targets = c(3, 4, 5, 12, 14, 15)))
+  )
+)
+```

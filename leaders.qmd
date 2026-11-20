@@ -1,0 +1,225 @@
+---
+title: "All-Time MLB Home Run Leaders"
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(tidyverse)
+library(Lahman)
+library(plotly)
+library(DT)
+library(crosstalk)
+
+team_franchises <- Teams |>
+  select(yearID, teamID, franchID, name) |>
+  distinct(yearID, teamID, .keep_all = TRUE)
+
+franchise_labels <- Teams |>
+  arrange(yearID) |>
+  group_by(franchID) |>
+  summarise(franchise = last(name), .groups = "drop")
+
+player_seasons <- Batting |>
+  left_join(team_franchises, by = c("yearID", "teamID")) |>
+  group_by(playerID, yearID) |>
+  summarise(
+    season_hr = sum(HR, na.rm = TRUE),
+    season_g = sum(G, na.rm = TRUE),
+    season_ab = sum(AB, na.rm = TRUE),
+    season_rbi = sum(RBI, na.rm = TRUE),
+    primary_franch = franchID[which.max(G)],
+    .groups = "drop"
+  )
+
+top_leaders <- player_seasons |>
+  group_by(playerID) |>
+  summarise(
+    career_hr = sum(season_hr),
+    games = sum(season_g),
+    at_bats = sum(season_ab),
+    career_rbi = sum(season_rbi),
+    peak_season_hr = max(season_hr),
+    peak_year = yearID[which.max(season_hr)],
+    first_year = min(yearID),
+    last_year = max(yearID),
+    franchID = names(sort(table(primary_franch), decreasing = TRUE))[1],
+    .groups = "drop"
+  ) |>
+  slice_max(career_hr, n = 30, with_ties = TRUE) |>
+  left_join(People |> select(playerID, nameFirst, nameLast, bats), by = "playerID") |>
+  left_join(franchise_labels, by = "franchID") |>
+  arrange(desc(career_hr), games) |>
+  mutate(
+    rank = min_rank(desc(career_hr)),
+    player_name = if_else(playerID == "griffke02", "Ken Griffey Jr.", paste(nameFirst, nameLast)),
+    years_active = paste0(first_year, "–", last_year),
+    peak_label = paste0(peak_season_hr, " (", peak_year, ")"),
+    hr_per_162 = round(162 * career_hr / games, 1),
+    ab_per_hr = round(at_bats / career_hr, 1),
+    bats_label = case_when(
+      bats == "L" ~ "Left",
+      bats == "R" ~ "Right",
+      bats == "B" ~ "Switch",
+      TRUE ~ "Right"
+    ),
+    era = factor(
+      case_when(
+        last_year < 1960 ~ "Pre-Expansion (before 1960)",
+        last_year < 1995 ~ "Expansion Era (1960–1994)",
+        TRUE ~ "Modern Era (1995–present)"
+      ),
+      levels = c(
+        "Pre-Expansion (before 1960)",
+        "Expansion Era (1960–1994)",
+        "Modern Era (1995–present)"
+      )
+    )
+  ) |>
+  mutate(player = factor(player_name, levels = rev(player_name))) |>
+  select(
+    rank, player, franchise, era, bats_label, years_active,
+    career_hr, peak_season_hr, peak_label, hr_per_162, ab_per_hr, career_rbi, games
+  )
+
+shared_leaders <- SharedData$new(top_leaders, key = ~player, group = "hr_leaders")
+
+era_colors <- c(
+  "Pre-Expansion (before 1960)" = "#1b9e77",
+  "Expansion Era (1960–1994)" = "#d95f02",
+  "Modern Era (1995–present)" = "#2c7fb8"
+)
+```
+
+## MLB's All-Time Home Run Kings
+
+Reaching the summit of Major League Baseball's career home run leaderboard demands an extraordinary blend of **single-season peak power** and **two-decade durability**. Only **28 hitters in MLB history** have joined the exclusive **500 Home Run Club**, and just four—**Barry Bonds (762)**, **Hank Aaron (755)**, **Babe Ruth (714)**, and **Albert Pujols (703)**—have ever eclipsed 700 career homers. Notably, ballpark environment plays a fascinating role even at the top: Barry Bonds hit the majority of his late-career homers in sea-level Oracle Park (13 ft elevation), where cool marine air suppresses carry, yet still set both the single-season (73 in 2001) and all-time career records.
+
+Use the interactive controls below to filter MLB's **Top 30 all-time home run hitters** (every 500-HR club member plus #29t Lou Gehrig and Fred McGriff at 493) by **era**, **batting handedness**, or **individual player**. All selections dynamically update both charts and the sortable leaderboard table.
+
+```{r}
+bscols(
+  widths = c(5, 3, 4),
+  filter_checkbox(
+    id = "era_filter",
+    label = "Filter by Baseball Era:",
+    sharedData = shared_leaders,
+    group = ~era
+  ),
+  filter_checkbox(
+    id = "bats_filter",
+    label = "Batting Hand:",
+    sharedData = shared_leaders,
+    group = ~bats_label
+  ),
+  filter_select(
+    id = "player_filter",
+    label = "Search / Highlight Hitter(s):",
+    sharedData = shared_leaders,
+    group = ~player
+  )
+)
+```
+
+### Career Home Run Totals (Top 30 All-Time)
+
+```{r}
+plot_ly(
+  data = shared_leaders,
+  x = ~career_hr,
+  y = ~player,
+  color = ~era,
+  colors = era_colors,
+  type = "bar",
+  orientation = "h",
+  text = ~paste0(
+    "<b>#", rank, " ", player, "</b> (", years_active, ")<br>",
+    "Primary Franchise: ", franchise, "<br>",
+    "Bats: ", bats_label, "<br>",
+    "Career Home Runs: <b>", career_hr, "</b><br>",
+    "Best Season: ", peak_label, " HR<br>",
+    "Pace per 162 Games: ", hr_per_162, " HR<br>",
+    "At-Bats per HR: ", ab_per_hr, "<br>",
+    "Career Games: ", scales::comma(games)
+  ),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = "Top 30 All-Time MLB Career Home Run Hitters",
+    xaxis = list(title = "Career Home Runs", range = c(0, 810)),
+    yaxis = list(title = ""),
+    legend = list(orientation = "h", x = 0, y = -0.12),
+    height = 700,
+    margin = list(l = 145, r = 25, t = 50, b = 75)
+  ) |>
+  config(displayModeBar = FALSE)
+```
+
+### Peak Power Pace vs. Career Longevity
+
+While total home runs reward longevity, comparing **games played** against **home runs per 162 games** reveals two distinct paths to baseball immortality. Pure power-rate outliers like **Mark McGwire** (50.4 HR per 162 games; 10.6 AB/HR) and **Babe Ruth** (46.2 HR per 162 games; 11.8 AB/HR) homered at historic frequencies, whereas ironmen like **Hank Aaron** (3,298 games), **Albert Pujols** (3,080 games), and **Eddie Murray** (3,026 games) sustained elite production over more than 20 seasons. Bubble size reflects each hitter's **single-season home run peak**.
+
+```{r}
+plot_ly(
+  data = shared_leaders,
+  x = ~games,
+  y = ~hr_per_162,
+  color = ~era,
+  colors = era_colors,
+  size = ~peak_season_hr,
+  sizes = c(12, 34),
+  type = "scatter",
+  mode = "markers",
+  marker = list(opacity = 0.85, line = list(color = "#ffffff", width = 1.5)),
+  text = ~paste0(
+    "<b>#", rank, " ", player, "</b><br>",
+    "Career HRs: <b>", career_hr, "</b> in ", scales::comma(games), " games<br>",
+    "Pace: <b>", hr_per_162, " HR / 162 G</b> (", ab_per_hr, " AB/HR)<br>",
+    "Single-Season Peak: ", peak_label, " HR<br>",
+    "Career RBI: ", scales::comma(career_rbi)
+  ),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = "Home Run Pace (HR per 162 Games) vs. Career Games Played",
+    xaxis = list(title = "Career Games Played", separatethousands = TRUE),
+    yaxis = list(title = "Home Runs per 162 Games"),
+    legend = list(orientation = "h", x = 0, y = -0.18),
+    height = 460,
+    margin = list(l = 65, r = 25, t = 50, b = 80)
+  ) |>
+  config(displayModeBar = FALSE)
+```
+
+### Sortable All-Time Home Run Leaderboard
+
+```{r}
+datatable(
+  shared_leaders,
+  rownames = FALSE,
+  colnames = c(
+    "Rank",
+    "Player",
+    "Primary Franchise",
+    "Era",
+    "Bats",
+    "Active Years",
+    "Career HR",
+    "Peak HR (Num)",
+    "Best Season",
+    "HR / 162 G",
+    "AB / HR",
+    "Career RBI",
+    "Games"
+  ),
+  options = list(
+    pageLength = 15,
+    lengthChange = TRUE,
+    order = list(list(6, "desc")),
+    columnDefs = list(list(visible = FALSE, targets = c(7)))
+  )
+)
+```

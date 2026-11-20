@@ -8,3 +8,11 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: exploration.qmd
+        text: Exploration
+      - href: story.qmd
+        text: Story
+      - href: leaders.qmd
+        text: Home Run Leaders
+      - href: stadiums.qmd
+        text: MLB Stadiums
