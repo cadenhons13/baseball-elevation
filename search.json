@@ -35,6 +35,34 @@
     "text": "How many home runs are actually hit at each Major League Baseball stadium—and how do ballpark elevation and outfield dimensions interact to shape those totals? Using official MLB Statcast ball-tracking data across the Statcast Era (2015–2026) alongside single-season 2026 home run counts, we can compare all 30 current MLB ballparks by altitude, total home runs hit, home runs per game, and average home run distance:\n\nMost Total Home Runs (2015–2026): Yankee Stadium (2,619 HRs; 55 ft elevation), Great American Ball Park (2,539 HRs; 482 ft), Oriole Park at Camden Yards (2,522 HRs; 20 ft), and Coors Field (2,436 HRs; 5,180 ft) top all active MLB venues.\nWhy Elevation Still Rules Ball Flight: Even though Colorado pushed Coors Field’s outfield fences far back to contain scoring, thin mile-high air propelled Coors Field to 2,436 home runs (#4 in MLB) and an MLB-best 419-foot average home run distance—nearly 30 feet longer than short-porch parks like Yankee Stadium (391 ft) and Daikin Park (386 ft). Meanwhile, sea-level Oracle Park (13 ft) sits lowest among long-tenured parks with just 1,614 home runs (1.75 HR/game).\nNote on newer MLB venues: Truist Park (opened 2017; 1,842 HRs in 759 games), Globe Life Field (opened 2020; 1,229 HRs in 516 games), and Sutter Health Park (MLB home of the Athletics in 2025–2026; 468 HRs in 156 games, or an MLB-high 3.00 HR/game) have fewer cumulative Statcast-era games, so both total HRs and HRs per game (plus 2026 single-season HRs) are shown below.\n\nUse the filters below to explore stadiums by division, roof design, or ballpark name—your selections dynamically filter the map, both charts, and the directory table.\n\n\n\n\n\n\nFilter by MLB Division:\n\n\n\n\n\n\n\n\nRoof Design:\n\n\n\nFixed Dome\n\n\n\nOpen-Air\n\n\n\nRetractable\n\n\n\n\n\n\n\nSelect / Compare Stadium(s):\n\n\n\n\n\n\n\n\n\n\n\n\nCircle color indicates elevation tier, while circle size scales with 2026 home runs hit. Hover or click any stadium marker to inspect its exact elevation and home run totals.\n\n\n\n\n\n\n\n\n\nEach point plots a ballpark’s elevation (feet) against home runs hit per game (2015–2026), with bubble size representing average home run distance and hover details showing exact cumulative and 2026 home run counts."
   },
   {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "Elevation and Baseball investigates how ballpark altitude and reduced air density shape batted-ball carry and home run production across Major League Baseball. By combining historical batting records with pitch-by-pitch MLB Statcast ball-tracking measurements across all 30 MLB stadiums, this project separates hitter swing mechanics (exit velocity and launch angle) from atmospheric carry—showing why Denver’s mile-high Coors Field (5,180 feet above sea level) remains baseball’s premier offensive outlier.\nThis project was created as part of a data science course at New College of Florida."
+  },
+  {
+    "objectID": "about.html#about-the-project",
+    "href": "about.html#about-the-project",
+    "title": "About",
+    "section": "",
+    "text": "Elevation and Baseball investigates how ballpark altitude and reduced air density shape batted-ball carry and home run production across Major League Baseball. By combining historical batting records with pitch-by-pitch MLB Statcast ball-tracking measurements across all 30 MLB stadiums, this project separates hitter swing mechanics (exit velocity and launch angle) from atmospheric carry—showing why Denver’s mile-high Coors Field (5,180 feet above sea level) remains baseball’s premier offensive outlier.\nThis project was created as part of a data science course at New College of Florida."
+  },
+  {
+    "objectID": "about.html#about-the-author",
+    "href": "about.html#about-the-author",
+    "title": "About",
+    "section": "About the Author",
+    "text": "About the Author\nMy name is Caden Honsberger, and I am an undergraduate student from Canada studying at New College of Florida.\n\nEmail: c.honsberger30@ncf.edu\nGitHub Profile: github.com/cadenhons13\nProject Repository: github.com/cadenhons13/baseball-elevation\nInstitution: New College of Florida"
+  },
+  {
+    "objectID": "about.html#data-sources",
+    "href": "about.html#data-sources",
+    "title": "About",
+    "section": "Data Sources",
+    "text": "Data Sources\nThis website integrates three primary sources of baseball, ballpark, and physics data:\n\nMLB Statcast (Baseball Savant): Ball-tracking data from MLB’s Statcast system provides batted-ball distance, exit velocity (launch_speed), and launch angle (launch_angle) across 62,145 tracked fly balls and line drives from the 2024 MLB regular season, as well as cumulative Statcast-era (2015–2026) and single-season stadium home run totals and average home run distances across all 30 active MLB venues.\nLahman Baseball Database (Lahman R Package / SABR Lahman Archive): Historical player-season batting and franchise tables (Batting, People, and Teams) are used to calculate hitter-season home run rates per 100 plate appearances (2010–2025) on the homepage and to compile career home runs, games played, single-season peaks, and home run pace for MLB’s Top 30 all-time home run leaders.\nMLB Ballpark Specifications & Atmospheric Flight Research: Approximate field-level elevations above sea level (from 7 ft at loanDepot park in Miami to 5,180 ft at Coors Field in Denver), stadium coordinates, opening years, and roof configurations were compiled from official MLB stadium directories and topographic elevation data. The physical motivation draws on Alan M. Nathan’s research, Effects of altitude and atmospheric conditions on the flight of a baseball."
+  },
+  {
     "objectID": "story.html",
     "href": "story.html",
     "title": "Why Baseballs Fly Farther at High Altitude",
